@@ -3,6 +3,7 @@ package common
 import (
 	"bad_bot/invoker"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -42,45 +43,78 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	split := strings.Split(m.Content, " ")
-	if len(split) < 2 || split[0] != "badbot" {
+	if len(split) < 1 || len(regexp.MustCompile("^!.*").FindString(split[0])) == 0 {
 		return
 	}
-	switch script := split[1]; script {
-	case "help":
-		_, _ = s.ChannelMessageSend(m.ChannelID, helpMessage())
 
-	case "calc":
-		out, err := invoker.Invoke(ScriptDir, script, split[1:]...)
+	switch script := split[0]; script {
+	case "!help":
+		s.ChannelMessageSend(m.ChannelID, helpMessage())
+
+	case "!calc":
+		err := sendScriptOutput(s, m, script[1:], split[1:]...)
 		if err != nil {
 			fmt.Println(err.Error())
-			break
+			return
 		}
-		_, _ = s.ChannelMessageSend(m.ChannelID, out)
 
-	case "sverje_ven":
-		args := strings.Join(split[2:], " ")
-		out, err := invoker.Invoke(ScriptDir, script, args)
+	case "!sverjeven":
+		args := strings.Join(split[1:], " ")
+		err := sendScriptOutput(s, m, "sverje_ven", args)
 		if err != nil {
 			fmt.Println(err.Error())
-			break
+			return
 		}
-		_, _ = s.ChannelMessageSend(m.ChannelID, out)
 
-	case "magmys":
-		_, _ = s.ChannelMessageSend(m.ChannelID, magmysMessage())
+	case "!proverb":
+		args := strings.Join(split[1:], " ")
+		err := sendScriptOutput(s, m, script[1:], args)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+	case "!pinkmonkey":
+		args := strings.Join(split[1:], " ")
+		err := sendScriptOutput(s, m, "pink_monkey", args)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+	case "!revcalc":
+		err := sendScriptOutput(s, m, script[1:], split[1:]...)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+	case "!magmys":
+		s.ChannelMessageSend(m.ChannelID, magmysMessage())
 
 	default:
-		_, _ = s.ChannelMessageSend(m.ChannelID, helpMessage())
+		s.ChannelMessageSend(m.ChannelID, helpMessage())
 		return
 	}
+}
+
+func sendScriptOutput(s *discordgo.Session, m *discordgo.MessageCreate, script string, args ...string) error {
+	out, err := invoker.Invoke(ScriptDir, script, args...)
+	if err != nil {
+		return err
+	}
+	s.ChannelMessageSend(m.ChannelID, out)
+	return nil
 }
 
 func helpMessage() string {
 	return fmt.Sprintf(`
 Commands:
-calc <equation> - Calculates <equation>
-sverje_ven <text> - Boosts your patriot-level
-magmys - Receive important rules`)
+!calc <equation> - Calculates <equation>
+!sverjeven <text> - Boosts your patriot-level
+!magmys - Receive important rules
+!proverb <amount> - Receive wisdom
+!pinkmonkey <amount> - Become a radfem`)
 }
 
 func magmysMessage() string {
