@@ -114,7 +114,8 @@ Commands:
 !sverjeven <text> - Boosts your patriot-level
 !magmys - Receive important rules
 !proverb <amount> - Receive wisdom
-!pinkmonkey <amount> - Become a radfem`)
+!pinkmonkey <amount> - Become a radfem
+!revcalc <number> - Learn how to equate numbers`)
 }
 
 func magmysMessage() string {
