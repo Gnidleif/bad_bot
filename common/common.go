@@ -92,6 +92,14 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	case "!magmys":
 		s.ChannelMessageSend(m.ChannelID, magmysMessage())
 
+	case "!spellcheck":
+		args := strings.Join(split[2:], " ")
+		err := sendScriptOutput(s, m, "spellcheck", split[1], args)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
 	default:
 		s.ChannelMessageSend(m.ChannelID, helpMessage())
 		return
@@ -115,7 +123,8 @@ Commands:
 !magmys - Receive important rules
 !proverb <amount> - Receive wisdom
 !pinkmonkey <amount> - Become a radfem
-!revcalc <number> - Learn how to equate numbers`)
+!revcalc <number> - Learn how to equate numbers
+!spellcheck <percent> - Stop being dyslexic`)
 }
 
 func magmysMessage() string {
