@@ -5,7 +5,7 @@ import (
 	"os/exec"
 )
 
-func Invoke(dir, script string, args ...string) (string, error) {
+func Invoke(dir, script string, frt bool, args ...string) (string, error) {
 	run := fmt.Sprintf("%s/%s/%s.py", dir, script, script)
 	if len(run) == 0 {
 		return "", fmt.Errorf("No script directory")
@@ -16,5 +16,12 @@ func Invoke(dir, script string, args ...string) (string, error) {
 		return "", err
 	}
 
-	return string(out), nil
+	ret := string(out)
+	if len(ret) == 0 {
+		return "", nil
+	}
+	if frt == true {
+		ret = fmt.Sprintf("`%s`", ret)
+	}
+	return ret, nil
 }

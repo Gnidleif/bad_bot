@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -12,6 +13,7 @@ import (
 var (
 	BotID     string
 	ScriptDir string
+	LastTweet time.Time
 )
 
 func Start(token, dir string) error {
@@ -100,6 +102,27 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
+	case "!tweet":
+		if !LastTweet.IsZero() {
+			if time.Since(LastTweet).Minutes() < 5.0 {
+				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("`Time since last tweet: %s. Cooldown 5 minutes.`", time.Since(LastTweet)))
+				return
+			}
+		}
+
+		out, err := invoker.Invoke(ScriptDir, "pink_monkey", false, "1")
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		handle := fmt.Sprintf("@%s", split[1])
+		err = sendScriptOutput(s, m, "bad_tweet", handle, out)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		LastTweet = time.Now()
+
 	default:
 		s.ChannelMessageSend(m.ChannelID, helpMessage())
 		return
@@ -107,7 +130,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func sendScriptOutput(s *discordgo.Session, m *discordgo.MessageCreate, script string, args ...string) error {
-	out, err := invoker.Invoke(ScriptDir, script, args...)
+	out, err := invoker.Invoke(ScriptDir, script, true, args...)
 	if err != nil {
 		return err
 	}
@@ -124,7 +147,8 @@ Commands:
 !proverb <amount> - Receive wisdom
 !pinkmonkey <amount> - Become a radfem
 !revcalc <number> - Learn how to equate numbers
-!spellcheck <percent> - Stop being dyslexic`)
+!spellcheck <percent> <text> - Stop being dyslexic
+!tweet <handle> - Tweet something insightful to someone`)
 }
 
 func magmysMessage() string {
