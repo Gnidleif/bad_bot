@@ -115,13 +115,17 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			fmt.Println(err.Error())
 			return
 		}
+		if len(out) <= 5 {
+			s.ChannelMessageSend(m.ChannelID, "`Generated text too short, try again`")
+			return
+		}
+		LastTweet = time.Now()
 		handle := fmt.Sprintf("@%s", split[1])
 		err = sendScriptOutput(s, m, "bad_tweet", handle, out)
 		if err != nil {
 			fmt.Println(err.Error())
 			return
 		}
-		LastTweet = time.Now()
 
 	default:
 		s.ChannelMessageSend(m.ChannelID, helpMessage())
