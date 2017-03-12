@@ -125,7 +125,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		LastTweet = time.Now()
 		msg := fmt.Sprintf("@%s %s", split[1], out)
 		reply := "-1"
-		if len(split) > 1 {
+		if len(split) > 2 {
 			reply = split[2]
 		}
 		err = sendScriptOutput(s, m, "bad_tweet", msg, reply)
