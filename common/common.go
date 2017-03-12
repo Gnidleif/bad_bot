@@ -34,6 +34,7 @@ func Start(token, dir string) error {
 	if err = dg.Open(); err != nil {
 		return err
 	}
+	go autoTweet()
 
 	ScriptDir = dir
 	return nil
@@ -104,8 +105,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	case "!tweet":
 		if !LastTweet.IsZero() {
-			if time.Since(LastTweet).Minutes() < 5.0 {
-				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("`Time since last tweet: %s. Cooldown 5 minutes.`", time.Since(LastTweet)))
+			if time.Since(LastTweet).Minutes() < 10.0 {
+				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("`Time since last tweet: %s. Cooldown 10 minutes.`", time.Since(LastTweet)))
 				return
 			}
 		}
@@ -115,13 +116,19 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			fmt.Println(err.Error())
 			return
 		}
+
 		if len(out) <= 5 {
-			s.ChannelMessageSend(m.ChannelID, "`Generated text too short, try again`")
+			s.ChannelMessageSend(m.ChannelID, "That weird bug happened, try again.")
 			return
 		}
+
 		LastTweet = time.Now()
-		handle := fmt.Sprintf("@%s", split[1])
-		err = sendScriptOutput(s, m, "bad_tweet", handle, out)
+		msg := fmt.Sprintf("@%s %s", split[1], out)
+		reply := "-1"
+		if len(split) > 1 {
+			reply = split[2]
+		}
+		err = sendScriptOutput(s, m, "bad_tweet", msg, reply)
 		if err != nil {
 			fmt.Println(err.Error())
 			return
@@ -135,6 +142,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func sendScriptOutput(s *discordgo.Session, m *discordgo.MessageCreate, script string, args ...string) error {
 	out, err := invoker.Invoke(ScriptDir, script, true, args...)
+	if len(out) > 0 {
+		fmt.Println(out)
+	}
 	if err != nil {
 		return err
 	}
@@ -152,7 +162,7 @@ Commands:
 !pinkmonkey <amount> - Become a radfem
 !revcalc <number> - Learn how to equate numbers
 !spellcheck <percent> <text> - Stop being dyslexic
-!tweet <handle> - Tweet something insightful to someone`)
+!tweet <handle> - Tweet something smart to <handle>`)
 }
 
 func magmysMessage() string {
@@ -168,4 +178,24 @@ Här i gruppen finns några regler som ska och måste efterföljas.
 8. Inget bagbang ( 2st tjejer och en man ) Här inte INTE OKEJ!
 9. Ingen piercing i naveln
 10. Fördriv inte tid utan bjud på er MAGMYS är MÅLET med nya gruppen :)`)
+}
+
+func autoTweet() {
+	for {
+		out, err := invoker.Invoke(ScriptDir, "pink_monkey", false, "1")
+		if err != nil {
+			fmt.Println(err.Error())
+			continue
+		}
+		if len(out) <= 5 {
+			continue
+		}
+		out = fmt.Sprintf("%s #svpol", out)
+		_, err = invoker.Invoke(ScriptDir, "bad_tweet", false, out, "-1")
+		if err != nil {
+			fmt.Println(err.Error())
+			continue
+		}
+		time.Sleep(45 * time.Minute)
+	}
 }
