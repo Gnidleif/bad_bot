@@ -77,16 +77,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-	case "!pinkmonkey":
-		args := strings.Join(split[1:], " ")
-		err := sendScriptOutput(s, m, "pink_monkey", args)
-		if err != nil {
-			fmt.Println(err.Error())
-			return
-		}
-
-	case "!revcalc":
-		err := sendScriptOutput(s, m, script[1:], split[1:]...)
+	case "!argue":
+		err := sendScriptOutput(s, m, "argue", split[1:]...)
 		if err != nil {
 			fmt.Println(err.Error())
 			return
@@ -111,14 +103,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		}
 
-		out, err := invoker.Invoke(ScriptDir, "pink_monkey", false, "1")
+		out, err := invoker.Invoke(ScriptDir, "argue", false, "pinkmonkey", "1")
 		if err != nil {
 			fmt.Println(err.Error())
-			return
-		}
-
-		if len(out) <= 5 {
-			s.ChannelMessageSend(m.ChannelID, "That weird bug happened, try again.")
 			return
 		}
 
@@ -159,8 +146,7 @@ Commands:
 !sverjeven <text> - Boosts your patriot-level
 !magmys - Receive important rules
 !proverb <amount> - Receive wisdom
-!pinkmonkey <amount> - Become a radfem
-!revcalc <number> - Learn how to equate numbers
+!argue <personality> <amount> - Receive DID-like powers
 !spellcheck <percent> <text> - Stop being dyslexic
 !tweet <handle> - Tweet something smart to <handle>`)
 }
@@ -182,7 +168,7 @@ Här i gruppen finns några regler som ska och måste efterföljas.
 
 func autoTweet() {
 	for {
-		out, err := invoker.Invoke(ScriptDir, "pink_monkey", false, "1")
+		out, err := invoker.Invoke(ScriptDir, "argue", false, "pinkmonkey", "1")
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
