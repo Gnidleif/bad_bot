@@ -196,6 +196,6 @@ func autoTweet() {
 			fmt.Println(err.Error())
 			continue
 		}
-		time.Sleep(45 * time.Minute)
+		time.Sleep(20 * time.Minute)
 	}
 }
