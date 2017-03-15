@@ -10,6 +10,11 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+type TwitterBot struct {
+	Name   string
+	Script string
+}
+
 var (
 	BotID     string
 	ScriptDir string
@@ -34,7 +39,20 @@ func Start(token, dir string) error {
 	if err = dg.Open(); err != nil {
 		return err
 	}
-	go autoTweet()
+
+	var bots [2]*TwitterBot
+	bots[0] = &TwitterBot{
+		Name:   "Charlie Chill",
+		Script: "pinkmonkey",
+	}
+	bots[1] = &TwitterBot{
+		Name:   "Stefan Sund",
+		Script: "sverjeven",
+	}
+
+	for _, bot := range bots {
+		go bot.AutoTweet()
+	}
 
 	ScriptDir = dir
 	return nil
@@ -103,19 +121,34 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		}
 
-		out, err := invoker.Invoke(ScriptDir, "argue", false, "pinkmonkey", "1")
+		var name string
+		var script string
+		switch split[1] {
+		case "pinkmonkey":
+			name = "Charlie Chill"
+			script = "pinkmonkey"
+		case "sverjeven":
+			name = "Stefan Sund"
+			script = "sverjeven"
+
+		default:
+			s.ChannelMessage(m.ChannelID, fmt.Sprintf("`Invalid personality: %s.`", split[1]))
+			return
+		}
+
+		out, err := invoker.Invoke(ScriptDir, "argue", false, script, "1")
 		if err != nil {
 			fmt.Println(err.Error())
 			return
 		}
 
 		LastTweet = time.Now()
-		msg := fmt.Sprintf("@%s %s", split[1], out)
+		msg := fmt.Sprintf("@%s %s", split[2], out)
 		reply := "-1"
-		if len(split) > 2 {
-			reply = split[2]
+		if len(split) > 3 {
+			reply = split[3]
 		}
-		err = sendScriptOutput(s, m, "bad_tweet", msg, reply)
+		err = sendScriptOutput(s, m, "bad_tweet", name, msg, reply)
 		if err != nil {
 			fmt.Println(err.Error())
 			return
@@ -166,9 +199,9 @@ Här i gruppen finns några regler som ska och måste efterföljas.
 10. Fördriv inte tid utan bjud på er MAGMYS är MÅLET med nya gruppen :)`)
 }
 
-func autoTweet() {
+func (bot *TwitterBot) AutoTweet() {
 	for {
-		out, err := invoker.Invoke(ScriptDir, "argue", false, "pinkmonkey", "1")
+		out, err := invoker.Invoke(ScriptDir, "argue", false, bot.Script, "1")
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
@@ -176,8 +209,14 @@ func autoTweet() {
 		if len(out) <= 5 {
 			continue
 		}
-		out = fmt.Sprintf("%s #svpol", out)
-		_, err = invoker.Invoke(ScriptDir, "bad_tweet", false, out, "-1")
+
+		if bot.Name == "Stefan Sund" {
+			out = fmt.Sprintf("@MrHenko123 %s #svpol", out)
+		} else {
+			out = fmt.Sprintf("%s #svpol", out)
+		}
+
+		_, err = invoker.Invoke(ScriptDir, "bad_tweet", false, bot.Name, out, "-1")
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
