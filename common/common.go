@@ -5,20 +5,13 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-type TwitterBot struct {
-	Name   string
-	Script string
-}
-
 var (
 	BotID     string
 	ScriptDir string
-	LastTweet time.Time
 )
 
 func Start(token, dir string) error {
@@ -38,20 +31,6 @@ func Start(token, dir string) error {
 
 	if err = dg.Open(); err != nil {
 		return err
-	}
-
-	var bots [2]*TwitterBot
-	bots[0] = &TwitterBot{
-		Name:   "Charlie Chill",
-		Script: "pinkmonkey",
-	}
-	bots[1] = &TwitterBot{
-		Name:   "Stefan Sund",
-		Script: "sverjeven",
-	}
-
-	for _, bot := range bots {
-		go bot.AutoTweet()
 	}
 
 	ScriptDir = dir
@@ -113,47 +92,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-	case "!tweet":
-		if !LastTweet.IsZero() {
-			if time.Since(LastTweet).Minutes() < 10.0 {
-				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("`Time since last tweet: %s. Cooldown 10 minutes.`", time.Since(LastTweet)))
-				return
-			}
-		}
-
-		var name string
-		var script string
-		switch split[1] {
-		case "pinkmonkey":
-			name = "Charlie Chill"
-			script = "pinkmonkey"
-		case "sverjeven":
-			name = "Stefan Sund"
-			script = "sverjeven"
-
-		default:
-			s.ChannelMessage(m.ChannelID, fmt.Sprintf("`Invalid personality: %s.`", split[1]))
-			return
-		}
-
-		out, err := invoker.Invoke(ScriptDir, "argue", false, script, "1")
-		if err != nil {
-			fmt.Println(err.Error())
-			return
-		}
-
-		LastTweet = time.Now()
-		msg := fmt.Sprintf("@%s %s", split[2], out)
-		reply := "-1"
-		if len(split) > 3 {
-			reply = split[3]
-		}
-		err = sendScriptOutput(s, m, "bad_tweet", name, msg, reply)
-		if err != nil {
-			fmt.Println(err.Error())
-			return
-		}
-
 	default:
 		s.ChannelMessageSend(m.ChannelID, helpMessage())
 		return
@@ -166,6 +104,7 @@ func sendScriptOutput(s *discordgo.Session, m *discordgo.MessageCreate, script s
 		fmt.Println(out)
 	}
 	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, helpMessage())
 		return err
 	}
 	s.ChannelMessageSend(m.ChannelID, out)
@@ -180,8 +119,7 @@ Commands:
 !magmys - Receive important rules
 !proverb <amount> - Receive wisdom
 !argue <personality> <amount> - Receive DID-like powers
-!spellcheck <percent> <text> - Stop being dyslexic
-!tweet <handle> - Tweet something smart to <handle>`)
+!spellcheck <percent> <text> - Stop being dyslexic`)
 }
 
 func magmysMessage() string {
@@ -197,30 +135,4 @@ Här i gruppen finns några regler som ska och måste efterföljas.
 8. Inget bagbang ( 2st tjejer och en man ) Här inte INTE OKEJ!
 9. Ingen piercing i naveln
 10. Fördriv inte tid utan bjud på er MAGMYS är MÅLET med nya gruppen :)`)
-}
-
-func (bot *TwitterBot) AutoTweet() {
-	for {
-		out, err := invoker.Invoke(ScriptDir, "argue", false, bot.Script, "1")
-		if err != nil {
-			fmt.Println(err.Error())
-			continue
-		}
-		if len(out) <= 5 {
-			continue
-		}
-
-		if bot.Name == "Stefan Sund" {
-			out = fmt.Sprintf("@MrHenko123 %s #svpol", out)
-		} else {
-			out = fmt.Sprintf("%s #svpol", out)
-		}
-
-		_, err = invoker.Invoke(ScriptDir, "bad_tweet", false, bot.Name, out, "-1")
-		if err != nil {
-			fmt.Println(err.Error())
-			continue
-		}
-		time.Sleep(20 * time.Minute)
-	}
 }

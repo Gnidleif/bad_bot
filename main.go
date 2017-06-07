@@ -19,6 +19,6 @@ func init() {
 
 func main() {
 	common.Start(Token, Dir)
-	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
+	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	<-make(chan struct{})
 }
