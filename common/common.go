@@ -60,7 +60,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	case "!sverjeven":
 		args := strings.Join(split[1:], " ")
-		err := sendScriptOutput(s, m, "sverje_ven", args)
+		err := sendScriptOutput(s, m, "sverjeven", args)
 		if err != nil {
 			fmt.Println(err.Error())
 			return
