@@ -92,6 +92,14 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
+	case "!spongebob":
+		args := strings.Join(split[1:], " ")
+		err := sendScriptOutput(s, m, "spongebob", args)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
 	default:
 		s.ChannelMessageSend(m.ChannelID, helpMessage())
 		return
@@ -119,7 +127,8 @@ Commands:
 !magmys - Receive important rules
 !proverb <amount> - Receive wisdom
 !argue <personality> <amount> - Receive DID-like powers
-!spellcheck <percent> <text> - Stop being dyslexic`)
+!spellcheck <percent> <text> - Stop being dyslexic
+!spongebob <text> - tHe LeFt CaN't MeMe`)
 }
 
 func magmysMessage() string {
