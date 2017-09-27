@@ -12,6 +12,7 @@ import (
 var (
 	BotID     string
 	ScriptDir string
+	validCmd  = regexp.MustCompile(`^!(calc|sverjeven|proverb|argue|magmys|spellcheck|spongebob|help)$`)
 )
 
 func Start(token, dir string) error {
@@ -43,22 +44,19 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	split := strings.Split(m.Content, " ")
-	if len(split) < 1 || len(regexp.MustCompile("^!.*").FindString(split[0])) == 0 {
+	if len(split) < 1 || len(validCmd.FindString(split[0])) == 0 {
 		return
 	}
 
-	switch script := split[0]; script {
-	case "!help":
-		s.ChannelMessageSend(m.ChannelID, helpMessage())
-
-	case "!calc":
+	switch script := split[0][1:]; script {
+	case "calc":
 		err := sendScriptOutput(s, m, script[1:], split[1:]...)
 		if err != nil {
 			fmt.Println(err.Error())
 			return
 		}
 
-	case "!sverjeven":
+	case "sverjeven":
 		args := strings.Join(split[1:], " ")
 		err := sendScriptOutput(s, m, "sverjeven", args)
 		if err != nil {
@@ -66,7 +64,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-	case "!proverb":
+	case "proverb":
 		args := strings.Join(split[1:], " ")
 		err := sendScriptOutput(s, m, script[1:], args)
 		if err != nil {
@@ -74,17 +72,17 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-	case "!argue":
+	case "argue":
 		err := sendScriptOutput(s, m, "argue", split[1:]...)
 		if err != nil {
 			fmt.Println(err.Error())
 			return
 		}
 
-	case "!magmys":
+	case "magmys":
 		s.ChannelMessageSend(m.ChannelID, magmysMessage())
 
-	case "!spellcheck":
+	case "spellcheck":
 		args := strings.Join(split[2:], " ")
 		err := sendScriptOutput(s, m, "spellcheck", split[1], args)
 		if err != nil {
@@ -92,7 +90,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-	case "!spongebob":
+	case "spongebob":
 		args := strings.Join(split[1:], " ")
 		err := sendScriptOutput(s, m, "spongebob", args)
 		if err != nil {
@@ -100,6 +98,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
+	case "help":
+		fallthrough
 	default:
 		s.ChannelMessageSend(m.ChannelID, helpMessage())
 		return
